@@ -2,7 +2,7 @@
 Pod::Spec.new do |s|
 
   s.name         = "CKCircleMenuView"
-  s.version      = "0.1.7"
+  s.version      = "0.1.8"
   s.summary      = "An easy-to-integrate popup menu of round buttons placed on a circle."
 
   s.description  = <<-DESC

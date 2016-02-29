@@ -165,9 +165,9 @@ NSString* const CIRCLE_MENU_TAP_MODE = @"kCircleMenuTapMode";
     
     tInnerView.tag = aTag + TAG_INNER_VIEW_OFFSET;
     [tInnerView addSubview:tButton];
+    [tButton addTarget:self action:@selector(circleButtonTapped:) forControlEvents:UIControlEventTouchDown];
     
     if (self.tapMode) {
-        [tButton addTarget:self action:@selector(circleButtonTapped:) forControlEvents:UIControlEventTouchDown];
         UITapGestureRecognizer* temporaryRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTap:)];
         [self addGestureRecognizer:temporaryRecognizer];
     }
