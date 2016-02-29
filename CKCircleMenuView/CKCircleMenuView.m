@@ -24,6 +24,7 @@
 @property (nonatomic) CGFloat buttonRadius;
 @property (nonatomic) CGFloat buttonBorderWidth;
 @property (nonatomic) BOOL tapMode;
+@property (nonatomic) BOOL fadeOut;
 
 @property (nonatomic, weak) UIView* clippingView;
 
@@ -145,6 +146,8 @@ NSString* const CIRCLE_MENU_TAP_MODE = @"kCircleMenuTapMode";
     CGFloat tButtonViewY = self.buttonRadius - anImage.size.height / 2;
     tButton.frame = CGRectMake(tButtonViewX, tButtonViewY, anImage.size.width, anImage.size.height);
     [tButton setImage:anImage forState:UIControlStateNormal];
+    tButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
+    tButton.imageEdgeInsets = UIEdgeInsetsMake(10, 10, 10, 10);
     tButton.tag = aTag + TAG_BUTTON_OFFSET;
     
     UIView* tInnerView = [[CKRoundView alloc] initWithFrame:CGRectMake(0.0, 0.0, self.buttonRadius * 2, self.buttonRadius * 2)];
@@ -154,11 +157,12 @@ NSString* const CIRCLE_MENU_TAP_MODE = @"kCircleMenuTapMode";
     tInnerView.layer.cornerRadius = self.buttonRadius;
     tInnerView.layer.borderColor = [self.borderViewColor CGColor];
     tInnerView.layer.borderWidth = self.buttonBorderWidth;
-
+    tButton.frame = tInnerView.frame;
+    
     if (self.depth) {
         [self applyInactiveDepthToButtonView:tInnerView];
     }
-
+    
     tInnerView.tag = aTag + TAG_INNER_VIEW_OFFSET;
     [tInnerView addSubview:tButton];
     
@@ -191,7 +195,7 @@ NSString* const CIRCLE_MENU_TAP_MODE = @"kCircleMenuTapMode";
         tMaxY = tClippingFrame.size.height + tClippingFrame.origin.y - self.buttonRadius * 2;
         tMinY = tClippingFrame.origin.y;
     }
-
+    
     int tButtonCount = (int)self.buttons.count;
     CGPoint tOrigin = CGPointMake(self.frame.size.width / 2, self.frame.size.height / 2);
     CGFloat tRadius = self.radius;
@@ -264,7 +268,7 @@ NSString* const CIRCLE_MENU_TAP_MODE = @"kCircleMenuTapMode";
         CGFloat tDiffY = tOrigin.y - tButtonView.frame.origin.y - self.buttonRadius;
         tButtonView.transform = CGAffineTransformMakeTranslation(tDiffX, tDiffY);
     }
-
+    
     CGFloat tDelay = 0.0;
     for (UIView* tButtonView in self.buttons) {
         tDelay = tDelay + self.animationDelay;
@@ -272,30 +276,38 @@ NSString* const CIRCLE_MENU_TAP_MODE = @"kCircleMenuTapMode";
             tButtonView.alpha = 1.0;
             tButtonView.transform = CGAffineTransformIdentity;
         } completion:^(BOOL finished) {
-        
+            
         }];
-    }
-    
-    if (self.delegate && [self.delegate respondsToSelector:@selector(circleMenuOpened)]) {
-        [self.delegate circleMenuOpened];
     }
 }
 
+
+- (void)closeMenu {
+    [self closeMenu:false];
+}
 /**
  * Performs the closing animation.
  */
-- (void)closeMenu
-{
+- (void)closeMenu:(BOOL)fadeout {
     if (!self.tapMode) {
         [self.recognizer removeTarget:self action:@selector(gestureChanged:)];
     }
+    CGPoint tOrigin = CGPointMake(self.frame.size.width / 2, self.frame.size.height / 2);
     
     [UIView animateWithDuration:0.3 delay:0.0 options:UIViewAnimationOptionCurveEaseOut animations:^{
         for (UIView* tButtonView in self.buttons) {
-            if (self.hoverTag > 0 && self.hoverTag == [self bareTagOfView:tButtonView]) {
-                tButtonView.transform = CGAffineTransformMakeScale(1.8, 1.8);
+            if (self.fadeOut || fadeout) {
+                if (self.hoverTag > 0 && self.hoverTag == [self bareTagOfView:tButtonView]) {
+                    tButtonView.transform = CGAffineTransformMakeScale(1.8, 1.8);
+                }
+                tButtonView.alpha = 0.0;
+            } else {
+                tButtonView.alpha = 0.0;
+                CGFloat tDiffX = tOrigin.x - tButtonView.frame.origin.x - self.buttonRadius;
+                CGFloat tDiffY = tOrigin.y - tButtonView.frame.origin.y - self.buttonRadius;
+                tButtonView.transform = CGAffineTransformMakeTranslation(tDiffX, tDiffY);
             }
-            tButtonView.alpha = 0.0;
+            
         }
     } completion:^(BOOL finished) {
         [self removeFromSuperview];
@@ -329,7 +341,7 @@ NSString* const CIRCLE_MENU_TAP_MODE = @"kCircleMenuTapMode";
         }
     } else {
         // the view "hit" is none of the buttons -> display all in normal state
-        [self resetButtonState];        
+        [self resetButtonState];
         self.hoverTag = 0;
     }
 }
@@ -401,7 +413,7 @@ NSString* const CIRCLE_MENU_TAP_MODE = @"kCircleMenuTapMode";
         // set as hover tag for activation animation
         self.hoverTag = tTag;
     }
-    [self closeMenu];
+    [self closeMenu:true];
 }
 
 /**
